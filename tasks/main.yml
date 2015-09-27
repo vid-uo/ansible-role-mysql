@@ -14,7 +14,6 @@
   homebrew: name={{ item }} state=latest
   with_items:
     - percona-server
-    - percona-toolkit
 
 - name: install launchagents
   file: src=/usr/local/opt/percona-server/homebrew.mxcl.percona-server.plist path=~/Library/LaunchAgents/homebrew.mxcl.percona-server.plist state=link force=yes
