@@ -1,31 +1,9 @@
 ---
 
-- name: create mysql directories
-  file:
-    path: "{{item}}"
-    state: directory
-  with_items:
-    - /usr/local/var
-    - /usr/local/var/mysql
-    - /usr/local/var/log/
-    - /Users/{{ lookup('env','USER') }}/Library/LaunchAgents
-
-- name: install percona server
+- name: install mysql server
   homebrew: name={{ item }} state=latest
   with_items:
-    - percona-server
-
-- name: install launchagents
-  file: src=/usr/local/opt/percona-server/homebrew.mxcl.percona-server.plist path=~/Library/LaunchAgents/homebrew.mxcl.percona-server.plist state=link force=yes
-
-- name: check if percona is loaded
-  shell: launchctl list
-  changed_when: False
-  register: percona_loaded_result
-
-- name: launch mysql
-  shell: launchctl load ~/Library/LaunchAgents/homebrew.mxcl.percona-server.plist
-  when: "'homebrew.mxcl.percona-server' not in percona_loaded_result.stdout"
+    - mysql
 
 - pause: seconds=5
 
@@ -33,12 +11,3 @@
   shell: if mysqladmin --user=root --password="" version; then rm -f /usr/local/var/log/mysql-root-user.done; mysql -uroot -e "UPDATE mysql.user SET Password = PASSWORD(\"{{ mysql_root_password }}\") WHERE User = \"root\"; DELETE FROM mysql.user WHERE User=\"\"; DELETE FROM mysql.user WHERE User=\"root\" AND Host NOT IN (\"localhost\", \"127.0.0.1\", \"::1\"); DROP DATABASE IF EXISTS test; FLUSH PRIVILEGES;"; touch /usr/local/var/log/mysql-root-user.done; fi
   args:
     creates: /usr/local/var/log/mysql-root-user.done
-
-- name: create fnv1a_64
-  shell: mysql -uroot -p{{ mysql_root_password }} -e "CREATE FUNCTION fnv1a_64 RETURNS INTEGER SONAME 'libfnv1a_udf.so'" && touch /usr/local/var/log/libfnv1a_udf.so.done creates=/usr/local/var/log/libfnv1a_udf.so.done
-
-- name: create fnv_64
-  shell: mysql -uroot -p{{ mysql_root_password }} -e "CREATE FUNCTION fnv_64 RETURNS INTEGER SONAME 'libfnv_udf.so'" && touch /usr/local/var/log/libfnv_udf.so.done creates=/usr/local/var/log/libfnv_udf.so.done
-
-- name: create murmur_hash
-  shell: mysql -uroot -p{{ mysql_root_password }} -e "CREATE FUNCTION murmur_hash RETURNS INTEGER SONAME 'libmurmur_udf.so'" && touch /usr/local/var/log/libmurmur_udf.so.done creates=/usr/local/var/log/libmurmur_udf.so.done
